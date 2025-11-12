@@ -4,7 +4,11 @@ from enum import Enum
 
 class BaseResponse(BaseModel):
     message: Optional[str] = Field(default=None)
-    
+
+class BaseModelWithException(BaseModel):
+    message: Optional[str] = Field(default=None)
+    exception: Optional[Exception] = Field(default=None)
+
 # Стандартный набор моделей для типа api openai 
 class Usage(BaseModel):
     prompt_tokens: int
@@ -30,6 +34,7 @@ class ChatCompletionRequest(BaseModel):
     n: Optional[int] = Field(None, alias="n")
     stream: Optional[bool] = Field(None, alias="stream")
     stop: Optional[List[str]] = Field(None, alias="stop")
+    think: Optional[bool] = Field(default=None)
     presence_penalty: Optional[float] = Field(None, alias="presence_penalty")
     frequency_penalty: Optional[float] = Field(None, alias="frequency_penalty")
     logit_bias: Optional[Dict[str, int]] = Field(None, alias="logit_bias")
@@ -40,10 +45,18 @@ class ChatCompletionChoice(BaseModel):
     message: ChatCompletionMessage
     finish_reason: str = Field(..., alias="finish_reason")
 
-class ChatCompletionResponse(BaseModel):
+class ChatCompletionResponse(BaseModelWithException):
     id: str = Field(..., alias="id")
     object: str = Field(..., alias="object")
     created: int = Field(..., alias="created")
     model: str = Field(..., alias="model")
     choices: List[ChatCompletionChoice]
     usage: Usage
+
+class Model(BaseModel):
+    id: int = Field(default=0)
+    model: str = Field(default="")
+    choices: Optional[List[ChatCompletionChoice]] = Field(default=None)
+
+class ModelsResponse(BaseModelWithException):
+    models:Optional[List[Model]] = Field(default=None)
