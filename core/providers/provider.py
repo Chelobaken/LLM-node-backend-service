@@ -1,9 +1,9 @@
-from models import ChatCompletionRequest,ChatCompletionResponse,ModelsResponse
+from core.models import ChatCompletionRequest,ChatCompletionResponse,ModelsResponse
 
 class Provider:
-    def init(Args:list):
+    def init(self,**args):
         pass
-    def message(request:ChatCompletionRequest) -> ChatCompletionResponse:
-        pass
-    def models_list() -> ModelsResponse:
-        pass
+    def message(self,request:ChatCompletionRequest) -> ChatCompletionResponse:
+        return ChatCompletionResponse(exception="Not implemented")
+    def models_list(self) -> ModelsResponse: 
+        return ModelsResponse(exception="Not implemented")
