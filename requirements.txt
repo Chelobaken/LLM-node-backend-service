@@ -2,3 +2,4 @@ fastapi[default]
 pydantic
 pydantic-settings
 ollama
+sqlalchemy
