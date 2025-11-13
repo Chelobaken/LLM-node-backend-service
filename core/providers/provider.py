@@ -3,6 +3,8 @@ from core.models import ChatCompletionRequest,ChatCompletionResponse,ModelsRespo
 class Provider:
     def init(self,**args):
         pass
+    def message_stream(self, request: ChatCompletionRequest):
+        return ChatCompletionResponse(exception="Not implemented")
     def message(self,request:ChatCompletionRequest) -> ChatCompletionResponse:
         return ChatCompletionResponse(exception="Not implemented")
     def models_list(self) -> ModelsResponse: 

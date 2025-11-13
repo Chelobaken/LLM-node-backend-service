@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
-
+    OLLAMA_URL: str
     @computed_field
     @property
     def all_cors_origins(self) -> list[str]:

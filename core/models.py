@@ -16,6 +16,8 @@ class Message(BaseModelWithException):
     content:str = Field(default="")
     thinking:str = Field(default="")
     complite:bool = Field(default=False)
+    async def __aiter__(self):
+        return self
 # Стандартный набор моделей для типа api openai 
 class Usage(BaseModel):
     prompt_tokens: int

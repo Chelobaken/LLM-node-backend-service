@@ -1,67 +1,57 @@
-from core.models import ChatCompletionRequest,ChatCompletionResponse,ChatCompletionChoice,Message
+from core.models import ChatCompletionRequest,Message
 from .provider import Provider
 from ollama import Client
-
-from collections import defaultdict
-from typing import List, Union
+from core.config import settings
+from core.utils.checkurl import checkurl
+import requests
 class OllamaProvider(Provider):
+    
     def init(self,**args):
+        if not settings.OLLAMA_URL:
+            raise Exception(f"OLLAMA_URL doest not set!\nOllamaProvider is not initialized")
+        if not checkurl(settings.OLLAMA_URL+"/api"):
+            raise Exception(f"{settings.OLLAMA_URL+"/api"} invalid!\nOllamaProvider is not initialized")
         self._model_name=args["model_name"]
         self._stream=args["stream"]
         self._think=args["think"]
-        self._ollama_client = Client(host="http://localhost:11434")
-        self._stream_buff:dict[str,list[Message]] = defaultdict(list)
-    async def message(self, request: ChatCompletionRequest) -> Union[Message, str]:
-        if not self._model_name:
-            return Message(exception="Model name doest set!")
+        self._ollama_client = Client(host=settings.OLLAMA_URL)
+    def message_stream(self, request: ChatCompletionRequest):
+        if not hasattr(self, '_model_name'):
+            raise Exception(f"OllamaProvider is not initialized")
+        try:
+            response = requests.post(
+                f"{settings.OLLAMA_URL}/api/generate",
+                json={
+                    "model": self._model_name,
+                    "messages": [x.model_dump() for x in request.messages],
+                    "stream": True
+                },
+                stream = True
+            )
+            for line in response.iter_lines():
+                if line:
+                    yield line.decode("utf-8")
+        except Exception as e:
+            raise Exception(f"Ollama error: {str(e)}")
+    def message(self, request: ChatCompletionRequest):
+        if not hasattr(self, '_model_name'):
+            raise Exception(f"OllamaProvider is not initialized")
         
         try:
-            if request.stream:
-                if_stream_mode=request.stream
-            else:
-                if_stream_mode=self._stream
             stream = self._ollama_client.chat(
                 model=self._model_name,
                 messages=[x.model_dump() for x in request.messages],
-                stream=if_stream_mode
+                stream=False
             )
-            
-            if if_stream_mode:
-                await self._process_stream(stream, request.user_id)
-                return request.user_id
-            else:
-                return await self._process_non_stream(stream)
-                
+            if not stream.message:
+                raise Exception(f"Ollama error: no message")
+            message = Message()
+            if stream.message.content:
+                message.content=stream.message.content
+            if stream.message.thinking:
+                message.thinking=stream.message.thinking
+            return message   
         except Exception as e:
             raise Exception(f"Ollama error: {str(e)}")
 
-    async def _process_stream(self, stream, user_id: str):
-        self._stream_buff[user_id] = []  
-        
-        for chunk in stream:
-            buff_message = Message()
-            if hasattr(chunk.message, 'thinking') and chunk.message.thinking:
-                buff_message.thinking += chunk.message.thinking
-            if hasattr(chunk.message, 'content') and chunk.message.content:
-                buff_message.content += chunk.message.content
-            
-            self._stream_buff[user_id].append(buff_message)
-
-    async def _process_non_stream(self, stream) -> Message:
-        message = Message()
-        
-        for chunk in stream:
-            if hasattr(chunk.message, 'thinking') and chunk.message.thinking:
-                message.thinking += chunk.message.thinking
-            if hasattr(chunk.message, 'content') and chunk.message.content:
-                message.content += chunk.message.content
-        
-        return message
-
-    async def get_stream_messages(self, user_id: str) -> List[Message]:
-        return self._stream_buff.get(user_id, [])
-    
-    async def clear_stream_buffer(self, user_id: str):
-        if user_id in self._stream_buff:
-            del self._stream_buff[user_id]
    
