@@ -5,7 +5,7 @@ from core.config import settings
 from core.utils.checkurl import checkurl
 import requests
 class OllamaProvider(Provider):
-    
+
     def init(self,**args):
         if not settings.OLLAMA_URL:
             raise Exception(f"OLLAMA_URL doest not set!\nOllamaProvider is not initialized")

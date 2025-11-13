@@ -1,6 +1,6 @@
 import warnings
 from typing import Annotated, Any, Literal, Self
-
+from typing import Optional
 from pydantic import (
     AnyUrl,
     BeforeValidator,
@@ -43,7 +43,8 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
-    OLLAMA_URL: str
+    OLLAMA_URL: Optional[str]
+    OPENROUTERKEY: Optional[str]
     @computed_field
     @property
     def all_cors_origins(self) -> list[str]:
